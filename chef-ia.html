@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chef IA – Generador de Recetas</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg-primary:#ffffff;
+  --bg-secondary:#f8f8f6;
+  --bg-tertiary:#f1efea;
+  --text-primary:#1a1a18;
+  --text-secondary:#5f5e5a;
+  --text-hint:#b4b2a9;
+  --border-light:rgba(0,0,0,0.08);
+  --border-mid:rgba(0,0,0,0.14);
+  --green:#1D9E75;
+  --green-dark:#0F6E56;
+  --green-light:#E1F5EE;
+  --green-text:#085041;
+  --amber-light:#FAEEDA;
+  --amber-text:#854F0B;
+  --blue-light:#E6F1FB;
+  --blue-text:#185FA5;
+  --red-light:#FCEBEB;
+  --red-text:#A32D2D;
+  --radius-sm:6px;
+  --radius-md:10px;
+  --radius-lg:14px;
+}
+@media(prefers-color-scheme:dark){
+  :root{
+    --bg-primary:#1e1e1c;
+    --bg-secondary:#252523;
+    --bg-tertiary:#2c2c2a;
+    --text-primary:#f0ede8;
+    --text-secondary:#b4b2a9;
+    --text-hint:#5f5e5a;
+    --border-light:rgba(255,255,255,0.07);
+    --border-mid:rgba(255,255,255,0.12);
+    --green-light:#04342C;
+    --green-text:#9FE1CB;
+    --amber-light:#412402;
+    --amber-text:#FAC775;
+    --blue-light:#042C53;
+    --blue-text:#B5D4F4;
+    --red-light:#501313;
+    --red-text:#F7C1C1;
+  }
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg-tertiary);color:var(--text-primary);min-height:100vh;font-size:15px;line-height:1.6}
+a{color:inherit;text-decoration:none}
+button{font-family:inherit;cursor:pointer}
+input{font-family:inherit}
+
+/* LAYOUT */
+.app{display:flex;flex-direction:column;min-height:100vh}
+.header{background:var(--bg-primary);border-bottom:0.5px solid var(--border-light);padding:0 1.5rem;display:flex;align-items:center;justify-content:space-between;height:58px;position:sticky;top:0;z-index:200}
+.logo{display:flex;align-items:center;gap:9px;font-size:17px;font-weight:600;letter-spacing:-0.3px;color:var(--text-primary)}
+.logo-icon{width:34px;height:34px;background:var(--green);border-radius:9px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:17px}
+.nav{display:flex;gap:2px}
+.nav-btn{background:none;border:none;padding:7px 13px;border-radius:var(--radius-md);font-size:13px;color:var(--text-secondary);cursor:pointer;display:flex;align-items:center;gap:6px;transition:background 0.12s,color 0.12s;font-weight:500}
+.nav-btn:hover{background:var(--bg-secondary);color:var(--text-primary)}
+.nav-btn.active{background:var(--bg-secondary);color:var(--text-primary)}
+.nav-btn i{font-size:16px}
+.main{flex:1;padding:1.5rem;max-width:920px;margin:0 auto;width:100%}
+.page{display:none}
+.page.active{display:block}
+
+/* HERO */
+.hero{background:linear-gradient(135deg,var(--green) 0%,var(--green-dark) 100%);border-radius:var(--radius-lg);padding:2rem;color:#fff;margin-bottom:1.5rem;position:relative;overflow:hidden}
+.hero::after{content:'🍽️';position:absolute;right:1.5rem;top:50%;transform:translateY(-50%);font-size:64px;opacity:0.18;pointer-events:none}
+.hero h1{font-size:22px;font-weight:600;margin-bottom:5px;letter-spacing:-0.3px}
+.hero p{font-size:14px;opacity:0.85;margin-bottom:1.25rem;max-width:480px}
+.search-bar{display:flex;gap:8px;max-width:560px}
+.search-input{flex:1;padding:10px 14px;border-radius:var(--radius-md);border:none;font-size:14px;background:rgba(255,255,255,0.95);color:#1a1a1a;outline:none}
+.search-input::placeholder{color:#888}
+.search-input:focus{outline:2px solid rgba(255,255,255,0.6);outline-offset:-1px}
+.search-btn{padding:10px 18px;background:rgba(255,255,255,0.18);color:#fff;border:1px solid rgba(255,255,255,0.35);border-radius:var(--radius-md);font-size:13px;font-weight:500;cursor:pointer;display:flex;align-items:center;gap:6px;transition:background 0.15s;white-space:nowrap}
+.search-btn:hover{background:rgba(255,255,255,0.28)}
+
+/* SECTION TITLE */
+.section-title{font-size:15px;font-weight:600;color:var(--text-primary);margin:0 0 1rem;display:flex;align-items:center;gap:7px;letter-spacing:-0.2px}
+.section-title i{color:var(--green);font-size:17px}
+
+/* CATEGORIES */
+.categories{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:1.5rem}
+.cat-chip{padding:6px 14px;border-radius:20px;border:0.5px solid var(--border-mid);background:var(--bg-primary);font-size:13px;color:var(--text-secondary);cursor:pointer;transition:all 0.13s;display:flex;align-items:center;gap:6px;font-weight:500}
+.cat-chip:hover{border-color:var(--green);color:var(--green)}
+.cat-chip.active{background:var(--green);color:#fff;border-color:var(--green)}
+
+/* RECIPE GRID */
+.recipe-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:1rem}
+.recipe-card{background:var(--bg-primary);border:0.5px solid var(--border-light);border-radius:var(--radius-lg);overflow:hidden;cursor:pointer;transition:transform 0.14s,border-color 0.14s,box-shadow 0.14s}
+.recipe-card:hover{transform:translateY(-2px);border-color:var(--border-mid);box-shadow:0 4px 16px rgba(0,0,0,0.06)}
+.card-img{height:140px;display:flex;align-items:center;justify-content:center;font-size:54px;background:var(--bg-secondary);position:relative}
+.card-save{position:absolute;top:9px;right:9px;width:30px;height:30px;border-radius:50%;background:var(--bg-primary);border:0.5px solid var(--border-light);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:15px;color:var(--text-secondary);transition:color 0.13s,transform 0.13s}
+.card-save:hover{transform:scale(1.15)}
+.card-save.saved{color:#E24B4A}
+.card-body{padding:13px}
+.card-title{font-size:14px;font-weight:600;color:var(--text-primary);margin-bottom:5px;line-height:1.35;letter-spacing:-0.1px}
+.card-meta{display:flex;gap:10px;font-size:12px;color:var(--text-secondary);margin-bottom:8px;align-items:center}
+.card-meta i{font-size:12px}
+
+/* BADGES */
+.badge{display:inline-flex;align-items:center;gap:4px;padding:2px 9px;border-radius:12px;font-size:11px;font-weight:600}
+.badge-green{background:var(--green-light);color:var(--green-text)}
+.badge-amber{background:var(--amber-light);color:var(--amber-text)}
+.badge-blue{background:var(--blue-light);color:var(--blue-text)}
+.badge-red{background:var(--red-light);color:var(--red-text)}
+
+/* DETAIL VIEW */
+.recipe-detail{display:none}
+.recipe-detail.active{display:block}
+.back-btn{display:inline-flex;align-items:center;gap:6px;background:none;border:0.5px solid var(--border-mid);border-radius:var(--radius-md);font-size:13px;color:var(--text-secondary);cursor:pointer;padding:7px 12px;margin-bottom:1rem;transition:all 0.13s;font-weight:500}
+.back-btn:hover{background:var(--bg-primary);color:var(--text-primary)}
+.detail-hero-card{background:var(--bg-primary);border:0.5px solid var(--border-light);border-radius:var(--radius-lg);overflow:hidden;margin-bottom:1rem}
+.detail-img{height:200px;display:flex;align-items:center;justify-content:center;font-size:84px;background:var(--bg-secondary)}
+.detail-info{padding:1.25rem}
+.detail-title-row{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:10px}
+.detail-title{font-size:20px;font-weight:600;letter-spacing:-0.4px}
+.save-detail-btn{background:none;border:0.5px solid var(--border-mid);border-radius:var(--radius-md);padding:7px 13px;cursor:pointer;font-size:13px;color:var(--text-secondary);display:flex;align-items:center;gap:6px;font-weight:500;white-space:nowrap;transition:all 0.13s}
+.save-detail-btn:hover{background:var(--bg-secondary)}
+.save-detail-btn.saved{color:#E24B4A;border-color:rgba(226,75,74,0.3)}
+.detail-badges{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:10px}
+.detail-desc{font-size:14px;color:var(--text-secondary);line-height:1.65}
+.two-col{display:grid;grid-template-columns:260px 1fr;gap:1rem}
+@media(max-width:640px){.two-col{grid-template-columns:1fr}}
+.panel{background:var(--bg-primary);border:0.5px solid var(--border-light);border-radius:var(--radius-lg);padding:1.25rem}
+.panel h3{font-size:14px;font-weight:600;margin-bottom:13px;display:flex;align-items:center;gap:7px;color:var(--text-primary)}
+.panel h3 i{color:var(--green);font-size:16px}
+.ing-list{list-style:none}
+.ing-list li{display:flex;align-items:flex-start;gap:9px;padding:8px 0;border-bottom:0.5px solid var(--border-light);font-size:13px;color:var(--text-secondary);line-height:1.4}
+.ing-list li:last-child{border-bottom:none}
+.ing-dot{width:8px;height:8px;border-radius:50%;background:var(--green);flex-shrink:0;margin-top:4px}
+.step-list{list-style:none}
+.step{display:flex;gap:13px;margin-bottom:16px;align-items:flex-start}
+.step:last-child{margin-bottom:0}
+.step-num{width:28px;height:28px;border-radius:50%;background:var(--green);color:#fff;font-size:12px;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+.step-title{font-size:13px;font-weight:600;margin-bottom:3px;color:var(--text-primary)}
+.step-desc{font-size:13px;color:var(--text-secondary);line-height:1.55}
+.step-img{margin-top:9px;height:72px;border-radius:var(--radius-md);background:var(--bg-secondary);display:flex;align-items:center;justify-content:center;font-size:28px;width:100%;border:0.5px solid var(--border-light)}
+
+/* GENERATOR */
+.generator-box{background:var(--bg-primary);border:0.5px solid var(--border-light);border-radius:var(--radius-lg);padding:1.5rem;margin-bottom:1rem}
+.generator-box + .generator-box{margin-top:-0.5rem}
+.gen-label{font-size:14px;font-weight:600;margin-bottom:10px;color:var(--text-primary);display:flex;align-items:center;gap:7px}
+.gen-label .step-badge{width:22px;height:22px;border-radius:50%;background:var(--green);color:#fff;font-size:11px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0}
+.cat-options{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:8px;margin-bottom:4px}
+.cat-opt{padding:11px 8px;border:0.5px solid var(--border-mid);border-radius:var(--radius-md);background:var(--bg-secondary);cursor:pointer;text-align:center;font-size:12px;font-weight:500;transition:all 0.13s;color:var(--text-secondary)}
+.cat-opt:hover{border-color:var(--green);color:var(--green)}
+.cat-opt.selected{border-color:var(--green);background:var(--green-light);color:var(--green-text);font-weight:600}
+.cat-emoji{font-size:26px;display:block;margin-bottom:5px}
+.ing-tags{display:flex;flex-wrap:wrap;gap:6px;min-height:32px;margin:10px 0 12px}
+.ing-tag{display:inline-flex;align-items:center;gap:5px;background:var(--bg-secondary);border:0.5px solid var(--border-mid);border-radius:20px;padding:5px 11px;font-size:13px;color:var(--text-secondary);font-weight:500}
+.ing-tag button{background:none;border:none;cursor:pointer;font-size:14px;color:var(--text-hint);padding:0;line-height:1;display:flex;align-items:center;transition:color 0.12s}
+.ing-tag button:hover{color:var(--text-primary)}
+.gen-input-row{display:flex;gap:8px;margin-bottom:4px}
+.gen-input{flex:1;padding:9px 13px;border:0.5px solid var(--border-mid);border-radius:var(--radius-md);font-size:14px;background:var(--bg-primary);color:var(--text-primary)}
+.gen-input:focus{outline:2px solid var(--green);outline-offset:-1px}
+.gen-input::placeholder{color:var(--text-hint)}
+.btn-primary{padding:9px 18px;background:var(--green);color:#fff;border:none;border-radius:var(--radius-md);font-size:14px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:7px;transition:background 0.13s}
+.btn-primary:hover{background:var(--green-dark)}
+.btn-primary:disabled{opacity:0.6;cursor:not-allowed}
+.btn-full{width:100%;justify-content:center}
+.gen-result{background:var(--bg-secondary);border-radius:var(--radius-md);padding:1.25rem;margin-top:1.25rem;border:0.5px solid var(--border-mid);animation:fadeIn 0.3s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.result-name{font-size:17px;font-weight:600;letter-spacing:-0.3px;margin-bottom:4px}
+.result-desc{font-size:13px;color:var(--text-secondary);margin-bottom:14px;line-height:1.55}
+.result-section-label{font-size:11px;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;color:var(--text-hint);margin-bottom:7px}
+.result-ings{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:14px}
+.result-step{display:flex;gap:10px;margin-bottom:12px;align-items:flex-start}
+.result-step:last-child{margin-bottom:0}
+.result-step-num{width:22px;height:22px;border-radius:50%;background:var(--green);color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+.result-step-title{font-size:13px;font-weight:600;margin-bottom:2px}
+.result-step-desc{font-size:13px;color:var(--text-secondary);line-height:1.5}
+.tip-box{background:var(--green-light);border-radius:var(--radius-md);padding:10px 13px;font-size:13px;color:var(--green-text);margin-top:14px;display:flex;gap:8px;align-items:flex-start;line-height:1.5}
+.tip-box i{font-size:15px;margin-top:1px;flex-shrink:0}
+
+/* SAVED PAGE */
+.saved-empty{text-align:center;padding:4rem 1rem;color:var(--text-secondary)}
+.saved-empty-icon{font-size:48px;margin-bottom:14px;display:block;color:var(--border-mid)}
+.saved-empty h3{font-size:15px;font-weight:600;margin-bottom:6px;color:var(--text-primary)}
+.saved-empty p{font-size:13px}
+
+/* SPINNER */
+.spinner{display:inline-block;width:15px;height:15px;border:2px solid rgba(255,255,255,0.35);border-top-color:#fff;border-radius:50%;animation:spin 0.65s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* TOAST */
+.toast{position:fixed;bottom:1.5rem;right:1.5rem;background:var(--green-dark);color:#fff;padding:10px 16px;border-radius:var(--radius-md);font-size:13px;display:flex;align-items:center;gap:8px;opacity:0;transform:translateY(8px);transition:all 0.22s;pointer-events:none;z-index:999;font-weight:500;box-shadow:0 4px 16px rgba(0,0,0,0.15)}
+.toast.show{opacity:1;transform:translateY(0)}
+.toast i{font-size:15px}
+
+/* EMPTY STATE for search */
+.no-results{text-align:center;padding:3rem 1rem;color:var(--text-secondary);grid-column:1/-1}
+.no-results i{font-size:36px;margin-bottom:10px;display:block;color:var(--text-hint)}
+
+@media(max-width:520px){
+  .nav-btn span{display:none}
+  .hero h1{font-size:19px}
+  .search-bar{flex-direction:column}
+  .search-btn{justify-content:center}
+  .recipe-grid{grid-template-columns:1fr 1fr}
+  .cat-options{grid-template-columns:repeat(3,1fr)}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="header">
+    <div class="logo">
+      <div class="logo-icon"><i class="ti ti-chef-hat"></i></div>
+      Chef IA
+    </div>
+    <nav class="nav">
+      <button class="nav-btn active" onclick="showPage('home')" data-page="home">
+        <i class="ti ti-home"></i><span>Inicio</span>
+      </button>
+      <button class="nav-btn" onclick="showPage('generator')" data-page="generator">
+        <i class="ti ti-sparkles"></i><span>Generar</span>
+      </button>
+      <button class="nav-btn" onclick="showPage('saved')" data-page="saved">
+        <i class="ti ti-bookmark"></i><span>Guardadas</span>
+      </button>
+    </nav>
+  </header>
+
+  <main class="main">
+    <!-- ===================== HOME PAGE ===================== -->
+    <div id="page-home" class="page active">
+      <div id="recipe-list-view">
+        <div class="hero">
+          <h1>¿Qué cocinamos hoy?</h1>
+          <p>Descubre recetas paso a paso con imágenes y encuentra la inspiración perfecta para tu próxima comida.</p>
+          <div class="search-bar">
+            <input class="search-input" type="text" id="search-input"
+              placeholder="Busca una receta o ingrediente..." oninput="filterRecipes()">
+            <button class="search-btn" onclick="filterRecipes()">
+              <i class="ti ti-search"></i> Buscar
+            </button>
+          </div>
+        </div>
+
+        <div class="categories">
+          <button class="cat-chip active" onclick="selectCat(this,'all')">Todas</button>
+          <button class="cat-chip" onclick="selectCat(this,'desayuno')">☕ Desayuno</button>
+          <button class="cat-chip" onclick="selectCat(this,'almuerzo')">🍽️ Almuerzo</button>
+          <button class="cat-chip" onclick="selectCat(this,'cena')">🌙 Cena</button>
+          <button class="cat-chip" onclick="selectCat(this,'rapido')">⚡ Rápido</button>
+          <button class="cat-chip" onclick="selectCat(this,'vegetariano')">🥗 Vegetariano</button>
+          <button class="cat-chip" onclick="selectCat(this,'postres')">🍮 Postres</button>
+        </div>
+
+        <p class="section-title"><i class="ti ti-flame"></i> Recetas populares</p>
+        <div class="recipe-grid" id="recipe-grid"></div>
+      </div>
+
+      <div id="recipe-detail-view" class="recipe-detail">
+        <button class="back-btn" onclick="closeDetail()">
+          <i class="ti ti-arrow-left"></i> Volver a recetas
+        </button>
+        <div id="detail-content"></div>
+      </div>
+    </div>
+
+    <!-- ===================== GENERATOR PAGE ===================== -->
+    <div id="page-generator" class="page">
+      <p class="section-title" style="margin-bottom:1rem">
+        <i class="ti ti-sparkles"></i> Generador de recetas con IA
+      </p>
+
+      <div class="generator-box">
+        <p class="gen-label"><span class="step-badge">1</span> Selecciona una categoría de comida</p>
+        <div class="cat-options" id="cat-options">
+          <div class="cat-opt selected" onclick="selectGenCat(this,'desayuno')"><span class="cat-emoji">☕</span>Desayuno</div>
+          <div class="cat-opt" onclick="selectGenCat(this,'almuerzo')"><span class="cat-emoji">🍽️</span>Almuerzo</div>
+          <div class="cat-opt" onclick="selectGenCat(this,'cena')"><span class="cat-emoji">🌙</span>Cena</div>
+          <div class="cat-opt" onclick="selectGenCat(this,'ensalada')"><span class="cat-emoji">🥗</span>Ensalada</div>
+          <div class="cat-opt" onclick="selectGenCat(this,'sopa')"><span class="cat-emoji">🍲</span>Sopa</div>
+          <div class="cat-opt" onclick="selectGenCat(this,'postre')"><span class="cat-emoji">🍮</span>Postre</div>
+        </div>
+      </div>
+
+      <div class="generator-box">
+        <p class="gen-label"><span class="step-badge">2</span> Agrega tus ingredientes disponibles</p>
+        <div class="gen-input-row">
+          <input class="gen-input" type="text" id="ing-input"
+            placeholder="Escribe un ingrediente y presiona Agregar"
+            onkeydown="if(event.key==='Enter')addIng()">
+          <button class="btn-primary" onclick="addIng()">
+            <i class="ti ti-plus"></i> Agregar
+          </button>
+        </div>
+        <div class="ing-tags" id="ing-tags">
+          <span class="ing-tag">pollo <button onclick="removeIng(this)" aria-label="Quitar pollo">×</button></span>
+          <span class="ing-tag">arroz <button onclick="removeIng(this)" aria-label="Quitar arroz">×</button></span>
+          <span class="ing-tag">cebolla <button onclick="removeIng(this)" aria-label="Quitar cebolla">×</button></span>
+        </div>
+        <button class="btn-primary btn-full" onclick="generateRecipe()" id="gen-btn">
+          <i class="ti ti-sparkles"></i> Generar receta con IA
+        </button>
+        <div id="gen-result" style="display:none"></div>
+      </div>
+    </div>
+
+    <!-- ===================== SAVED PAGE ===================== -->
+    <div id="page-saved" class="page">
+      <p class="section-title"><i class="ti ti-bookmark"></i> Mis recetas guardadas</p>
+      <div id="saved-grid" class="recipe-grid"></div>
+      <div id="saved-empty" class="saved-empty" style="display:none">
+        <i class="ti ti-bookmark-off saved-empty-icon"></i>
+        <h3>Aún no tienes recetas guardadas</h3>
+        <p>Toca el corazón en cualquier receta para guardarla aquí.</p>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ===================== DATA =====================
+const RECIPES = [
+  {
+    id:1, name:'Arroz con Pollo Casero', cat:'almuerzo', emoji:'🍗',
+    time:'30 min', diff:'Fácil', servings:4,
+    desc:'Un clásico reconfortante con pollo tierno y arroz perfectamente sazonado. Ideal para el almuerzo familiar.',
+    ingredients:['500g de pollo en cubos','2 tazas de arroz blanco','1 cebolla mediana picada','3 dientes de ajo','1 taza de caldo de pollo','Sal, pimienta y comino al gusto','Aceite de oliva'],
+    steps:[
+      {title:'Sofríe la base',desc:'Calienta aceite en una olla grande. Sofríe la cebolla y el ajo a fuego medio hasta que estén dorados y fragantes.',emoji:'🧅'},
+      {title:'Sella el pollo',desc:'Agrega el pollo en cubos y cocina por 6–8 minutos hasta que esté dorado por todos lados. Sazona con sal, pimienta y comino.',emoji:'🍗'},
+      {title:'Incorpora el arroz',desc:'Añade el arroz crudo a la olla y mezcla bien para que absorba los jugos del pollo. Cocina 2 minutos.',emoji:'🍚'},
+      {title:'Cocción final',desc:'Vierte el caldo y 1 taza de agua. Lleva a hervor, tapa y cocina a fuego bajo por 18–20 minutos.',emoji:'♨️'},
+      {title:'Reposo y sirve',desc:'Apaga el fuego y deja reposar 5 minutos tapado. Sirve caliente.',emoji:'✨'}
+    ]
+  },
+  {
+    id:2, name:'Omelette Especial', cat:'desayuno', emoji:'🍳',
+    time:'10 min', diff:'Muy fácil', servings:1,
+    desc:'Un omelette esponjoso y delicioso, perfecto para un desayuno rápido y nutritivo.',
+    ingredients:['3 huevos frescos','50g de queso rallado','1 tomate picado en cubos','Sal y pimienta al gusto','Mantequilla o aceite'],
+    steps:[
+      {title:'Prepara los huevos',desc:'Bate los huevos con sal y pimienta hasta obtener una mezcla espumosa y uniforme.',emoji:'🥚'},
+      {title:'Prepara el relleno',desc:'Pica el tomate en cubos pequeños y ralla el queso. Reserva por separado.',emoji:'🍅'},
+      {title:'Cocina el omelette',desc:'Calienta mantequilla en sartén antiadherente a fuego medio-alto. Vierte los huevos y distribuye uniformemente.',emoji:'🍳'},
+      {title:'Agrega el relleno',desc:'Cuando los bordes estén cocidos pero el centro aún suave, coloca el tomate y el queso en la mitad.',emoji:'🧀'},
+      {title:'Dobla y sirve',desc:'Dobla el omelette a la mitad, cocina 30 segundos más y desliza al plato. ¡Sirve inmediatamente!',emoji:'✨'}
+    ]
+  },
+  {
+    id:3, name:'Pasta con Salsa Casera', cat:'cena', emoji:'🍝',
+    time:'20 min', diff:'Fácil', servings:3,
+    desc:'Una pasta clásica con salsa de tomate casera llena de sabor, lista en minutos.',
+    ingredients:['300g de pasta (espagueti o penne)','4 tomates maduros','1 cebolla','3 dientes de ajo','Albahaca fresca','Sal, azúcar y aceite de oliva'],
+    steps:[
+      {title:'Hierve la pasta',desc:'Lleva agua con sal abundante a hervor. Cocina la pasta según el paquete hasta que esté al dente.',emoji:'🍝'},
+      {title:'Prepara la base',desc:'Sofríe cebolla y ajo picado en aceite de oliva por 3 minutos hasta que estén transparentes.',emoji:'🧅'},
+      {title:'Cocina la salsa',desc:'Agrega el tomate triturado y una pizca de azúcar para equilibrar la acidez. Cocina 10–12 minutos a fuego medio.',emoji:'🍅'},
+      {title:'Sazona y mezcla',desc:'Sazona con sal y albahaca. Escurre la pasta y mézclala directamente con la salsa en la sartén.',emoji:'🧂'},
+      {title:'Sirve con estilo',desc:'Sirve en plato hondo con queso parmesano rallado y una hoja de albahaca fresca.',emoji:'✨'}
+    ]
+  },
+  {
+    id:4, name:'Ensalada Fresca', cat:'vegetariano', emoji:'🥗',
+    time:'10 min', diff:'Muy fácil', servings:2,
+    desc:'Una ensalada vibrante y refrescante, perfecta para acompañar cualquier plato o como comida ligera.',
+    ingredients:['2 tazas de lechuga mixta','2 tomates cherry cortados','1 pepino en rodajas','1/4 de cebolla morada','Aceite de oliva y limón','Sal y pimienta'],
+    steps:[
+      {title:'Lava los vegetales',desc:'Lava muy bien todos los vegetales con agua fría. Seca con papel de cocina.',emoji:'🚿'},
+      {title:'Corta y prepara',desc:'Corta la lechuga, los tomates cherry por la mitad, el pepino en medias lunas y la cebolla en juliana fina.',emoji:'🔪'},
+      {title:'Arma la ensalada',desc:'Coloca la lechuga como base y dispón el resto de los ingredientes de forma vistosa encima.',emoji:'🥗'},
+      {title:'Prepara el aderezo',desc:'Mezcla 2 cucharadas de aceite de oliva con el jugo de un limón. Añade sal y pimienta al gusto.',emoji:'🫒'},
+      {title:'Sirve fría',desc:'Vierte el aderezo justo antes de servir y mezcla suavemente.',emoji:'✨'}
+    ]
+  },
+  {
+    id:5, name:'Sándwich Caliente de Queso', cat:'rapido', emoji:'🥪',
+    time:'5 min', diff:'Muy fácil', servings:1,
+    desc:'El clásico sándwich tostado de queso derretido. Reconfortante y listo en minutos.',
+    ingredients:['2 rebanadas de pan de molde','2 láminas de queso amarillo','Mantequilla','Opcional: jamón, tomate'],
+    steps:[
+      {title:'Prepara el pan',desc:'Unta mantequilla en la parte exterior de ambas rebanadas de pan para lograr un dorado perfecto.',emoji:'🍞'},
+      {title:'Arma el sándwich',desc:'Coloca las láminas de queso entre las rebanadas, con la mantequilla hacia afuera.',emoji:'🧀'},
+      {title:'Tuesta a la perfección',desc:'Calienta una sartén a fuego medio. Tuesta el sándwich 2–3 minutos por lado hasta que esté dorado.',emoji:'🍳'},
+      {title:'El queso debe derretir',desc:'Presiona suavemente con una espátula. Listo cuando el queso derrita y el pan esté crujiente.',emoji:'♨️'},
+      {title:'Sirve caliente',desc:'Corta en diagonal y sirve inmediatamente mientras el queso aún está derretido.',emoji:'✨'}
+    ]
+  },
+  {
+    id:6, name:'Pollo con Tomate', cat:'cena', emoji:'🍲',
+    time:'25 min', diff:'Fácil', servings:3,
+    desc:'Pollo jugoso en salsa de tomate especiada. Sencillo, sabroso y nutritivo.',
+    ingredients:['600g de pollo','3 tomates maduros o 1 lata de tomate triturado','1 cebolla','Ajo, orégano, sal y pimienta','Aceite de oliva'],
+    steps:[
+      {title:'Corta y prepara',desc:'Corta el pollo en trozos regulares. Marina con sal, pimienta y orégano.',emoji:'🔪'},
+      {title:'Sella el pollo',desc:'Calienta aceite a fuego alto. Sella el pollo 3–4 minutos por lado hasta que esté dorado.',emoji:'🍗'},
+      {title:'Sofríe la base',desc:'En la misma sartén sofríe cebolla y ajo hasta que estén transparentes.',emoji:'🧅'},
+      {title:'Agrega el tomate',desc:'Incorpora el tomate triturado. Sazona y cocina a fuego medio por 5 minutos.',emoji:'🍅'},
+      {title:'Cocción final',desc:'Vuelve a incorporar el pollo, tapa y cocina a fuego bajo 10–12 minutos.',emoji:'✨'}
+    ]
+  },
+  {
+    id:7, name:'Avena con Frutas', cat:'desayuno', emoji:'🥣',
+    time:'8 min', diff:'Muy fácil', servings:1,
+    desc:'Un desayuno nutritivo y energético con avena cremosa cubierta de frutas frescas.',
+    ingredients:['1 taza de avena en hojuelas','2 tazas de leche o agua','1 banana en rodajas','Frutas de temporada','Miel y canela al gusto'],
+    steps:[
+      {title:'Cocina la avena',desc:'En una olla pequeña mezcla la avena con la leche a fuego medio. Revuelve constantemente.',emoji:'🥣'},
+      {title:'Espesa la mezcla',desc:'Cocina 4–5 minutos hasta que la avena espese. Añade una pizca de sal.',emoji:'♨️'},
+      {title:'Sazona',desc:'Retira del fuego y añade canela. Si usas endulzante, agrega en este momento.',emoji:'🍯'},
+      {title:'Sirve y decora',desc:'Sirve en un bowl y corona con rodajas de banana y las frutas que prefieras.',emoji:'🍌'},
+      {title:'Toque final',desc:'Un chorrito de miel y más canela por encima. ¡Listo para energizar tu día!',emoji:'✨'}
+    ]
+  },
+  {
+    id:8, name:'Torta de Chocolate', cat:'postres', emoji:'🍰',
+    time:'45 min', diff:'Medio', servings:8,
+    desc:'Irresistible, esponjosa y húmeda. La torta de chocolate definitiva.',
+    ingredients:['2 tazas de harina','1 taza de cacao en polvo','1.5 tazas de azúcar','2 huevos','1 taza de leche','1/2 taza de aceite vegetal','1 sobre de polvo de hornear'],
+    steps:[
+      {title:'Precalienta el horno',desc:'Precalienta el horno a 180°C. Engrasa y enharina un molde redondo de 22 cm.',emoji:'🔥'},
+      {title:'Mezcla los secos',desc:'Tamiza la harina, el cacao, el azúcar y el polvo de hornear en un bowl grande. Mezcla bien.',emoji:'🍫'},
+      {title:'Incorpora los húmedos',desc:'Haz un hueco en el centro y añade huevos, leche y aceite. Mezcla hasta obtener masa suave y homogénea.',emoji:'🥚'},
+      {title:'Hornea',desc:'Vierte en el molde y hornea 30–35 minutos. Verifica insertando un palillo: debe salir limpio.',emoji:'♨️'},
+      {title:'Enfría y decora',desc:'Deja enfriar 10 minutos en el molde y luego en rejilla. Decora con ganache o azúcar impalpable.',emoji:'✨'}
+    ]
+  }
+];
+
+// ===================== STATE =====================
+let savedIds = JSON.parse(localStorage.getItem('chefIaSaved') || '[]');
+let currentCat = 'all';
+let genCategory = 'desayuno';
+
+// ===================== NAVIGATION =====================
+function showPage(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+  document.querySelector(`[data-page="${page}"]`).classList.add('active');
+  if (page === 'saved') renderSaved();
+}
+
+// ===================== HOME =====================
+function selectCat(el, cat) {
+  document.querySelectorAll('.cat-chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  currentCat = cat;
+  renderRecipes();
+}
+
+function filterRecipes() { renderRecipes(); }
+
+function diffBadge(diff) {
+  if (diff === 'Muy fácil') return 'badge-green';
+  if (diff === 'Fácil') return 'badge-blue';
+  if (diff === 'Medio') return 'badge-amber';
+  return 'badge-red';
+}
+
+function renderRecipes() {
+  const q = (document.getElementById('search-input').value || '').toLowerCase().trim();
+  const grid = document.getElementById('recipe-grid');
+  const filtered = RECIPES.filter(r => {
+    const catMatch = currentCat === 'all' || r.cat === currentCat;
+    const searchMatch = !q
+      || r.name.toLowerCase().includes(q)
+      || r.ingredients.some(i => i.toLowerCase().includes(q));
+    return catMatch && searchMatch;
+  });
+  if (filtered.length === 0) {
+    grid.innerHTML = `<div class="no-results"><i class="ti ti-search-off"></i><p>No encontramos recetas con ese criterio.<br>Intenta con otro ingrediente o categoría.</p></div>`;
+    return;
+  }
+  grid.innerHTML = filtered.map(r => recipeCardHtml(r)).join('');
+}
+
+function recipeCardHtml(r) {
+  const isSaved = savedIds.includes(r.id);
+  return `<div class="recipe-card" onclick="showDetail(${r.id})">
+    <div class="card-img">${r.emoji}
+      <button class="card-save ${isSaved ? 'saved' : ''}"
+        onclick="toggleSave(event,${r.id})"
+        aria-label="${isSaved ? 'Quitar de guardados' : 'Guardar receta'}">
+        <i class="ti ${isSaved ? 'ti-heart-filled' : 'ti-heart'}"></i>
+      </button>
+    </div>
+    <div class="card-body">
+      <p class="card-title">${r.name}</p>
+      <div class="card-meta">
+        <span><i class="ti ti-clock"></i> ${r.time}</span>
+        <span><i class="ti ti-users"></i> ${r.servings} porc.</span>
+      </div>
+      <span class="badge ${diffBadge(r.diff)}">${r.diff}</span>
+    </div>
+  </div>`;
+}
+
+function showDetail(id) {
+  const r = RECIPES.find(x => x.id === id);
+  if (!r) return;
+  const isSaved = savedIds.includes(r.id);
+  document.getElementById('detail-content').innerHTML = `
+    <div class="detail-hero-card">
+      <div class="detail-img">${r.emoji}</div>
+      <div class="detail-info">
+        <div class="detail-title-row">
+          <h2 class="detail-title">${r.name}</h2>
+          <button id="save-detail-btn" class="save-detail-btn ${isSaved ? 'saved' : ''}"
+            onclick="toggleSave(event,${r.id})">
+            <i class="ti ${isSaved ? 'ti-heart-filled' : 'ti-heart'}"></i>
+            ${isSaved ? 'Guardada' : 'Guardar'}
+          </button>
+        </div>
+        <div class="detail-badges">
+          <span class="badge ${diffBadge(r.diff)}">${r.diff}</span>
+          <span class="badge badge-blue"><i class="ti ti-clock" style="font-size:11px"></i> ${r.time}</span>
+          <span class="badge badge-green"><i class="ti ti-users" style="font-size:11px"></i> ${r.servings} porciones</span>
+        </div>
+        <p class="detail-desc">${r.desc}</p>
+      </div>
+    </div>
+    <div class="two-col">
+      <div class="panel">
+        <h3><i class="ti ti-shopping-cart"></i> Ingredientes</h3>
+        <ul class="ing-list">
+          ${r.ingredients.map(i => `<li><span class="ing-dot"></span>${i}</li>`).join('')}
+        </ul>
+      </div>
+      <div class="panel">
+        <h3><i class="ti ti-list-numbers"></i> Preparación paso a paso</h3>
+        <ol class="step-list">
+          ${r.steps.map((s, i) => `
+            <li class="step">
+              <div class="step-num">${i + 1}</div>
+              <div>
+                <p class="step-title">${s.title}</p>
+                <p class="step-desc">${s.desc}</p>
+                <div class="step-img">${s.emoji}</div>
+              </div>
+            </li>`).join('')}
+        </ol>
+      </div>
+    </div>`;
+  document.getElementById('recipe-list-view').style.display = 'none';
+  document.getElementById('recipe-detail-view').classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+function closeDetail() {
+  document.getElementById('recipe-list-view').style.display = '';
+  document.getElementById('recipe-detail-view').classList.remove('active');
+  renderRecipes();
+}
+
+// ===================== SAVE / BOOKMARK =====================
+function toggleSave(e, id) {
+  e.stopPropagation();
+  if (savedIds.includes(id)) {
+    savedIds = savedIds.filter(x => x !== id);
+    showToast('Receta eliminada de guardados');
+  } else {
+    savedIds.push(id);
+    showToast('¡Receta guardada!');
+  }
+  localStorage.setItem('chefIaSaved', JSON.stringify(savedIds));
+  renderRecipes();
+  // Update detail button if visible
+  const btn = document.getElementById('save-detail-btn');
+  if (btn) {
+    const isSaved = savedIds.includes(id);
+    btn.className = 'save-detail-btn' + (isSaved ? ' saved' : '');
+    btn.innerHTML = `<i class="ti ${isSaved ? 'ti-heart-filled' : 'ti-heart'}"></i> ${isSaved ? 'Guardada' : 'Guardar'}`;
+  }
+}
+
+// ===================== SAVED PAGE =====================
+function renderSaved() {
+  const grid = document.getElementById('saved-grid');
+  const empty = document.getElementById('saved-empty');
+  const saved = RECIPES.filter(r => savedIds.includes(r.id));
+  if (saved.length === 0) {
+    grid.innerHTML = '';
+    empty.style.display = 'block';
+  } else {
+    empty.style.display = 'none';
+    grid.innerHTML = saved.map(r => recipeCardHtml(r)).join('');
+  }
+}
+
+// ===================== GENERATOR =====================
+function selectGenCat(el, cat) {
+  document.querySelectorAll('.cat-opt').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  genCategory = cat;
+}
+
+function addIng() {
+  const input = document.getElementById('ing-input');
+  const val = input.value.trim().toLowerCase();
+  if (!val) return;
+  const tags = document.getElementById('ing-tags');
+  const existing = Array.from(tags.querySelectorAll('.ing-tag'))
+    .map(t => t.firstChild.textContent.trim());
+  if (existing.includes(val)) { showToast('Ese ingrediente ya está en la lista'); return; }
+  const tag = document.createElement('span');
+  tag.className = 'ing-tag';
+  tag.innerHTML = `${val} <button onclick="removeIng(this)" aria-label="Quitar ${val}">×</button>`;
+  tags.appendChild(tag);
+  input.value = '';
+  input.focus();
+}
+
+function removeIng(btn) { btn.parentElement.remove(); }
+
+async function generateRecipe() {
+  const tags = document.getElementById('ing-tags');
+  const ings = Array.from(tags.querySelectorAll('.ing-tag'))
+    .map(t => t.firstChild.textContent.trim());
+  if (ings.length === 0) { showToast('Agrega al menos un ingrediente'); return; }
+
+  const btn = document.getElementById('gen-btn');
+  btn.innerHTML = '<span class="spinner"></span> Generando receta...';
+  btn.disabled = true;
+  const resultDiv = document.getElementById('gen-result');
+  resultDiv.style.display = 'none';
+
+  try {
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 1000,
+        messages: [{
+          role: 'user',
+          content: `Eres un chef experto. Crea una receta creativa de ${genCategory} usando principalmente estos ingredientes: ${ings.join(', ')}.
+Responde SOLO en JSON sin backticks ni texto extra. Formato exacto:
+{"nombre":"...","descripcion":"...","tiempo":"...","dificultad":"Fácil","porciones":4,"ingredientes":["...","..."],"pasos":[{"titulo":"...","descripcion":"..."},{"titulo":"...","descripcion":"..."}],"consejo":"..."}`
+        }]
+      })
+    });
+    const data = await resp.json();
+    let text = data.content.map(i => i.text || '').join('');
+    text = text.replace(/```json|```/g, '').trim();
+    const recipe = JSON.parse(text);
+
+    resultDiv.innerHTML = `
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:10px;flex-wrap:wrap">
+        <div>
+          <p class="result-name">${recipe.nombre}</p>
+          <p class="result-desc">${recipe.descripcion}</p>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:5px;align-items:flex-end;flex-shrink:0">
+          <span class="badge badge-blue"><i class="ti ti-clock" style="font-size:11px"></i> ${recipe.tiempo}</span>
+          <span class="badge badge-green">${recipe.dificultad}</span>
+          <span class="badge badge-amber"><i class="ti ti-users" style="font-size:11px"></i> ${recipe.porciones} porciones</span>
+        </div>
+      </div>
+      <p class="result-section-label">Ingredientes</p>
+      <div class="result-ings">
+        ${recipe.ingredientes.map(i => `<span class="badge badge-amber">${i}</span>`).join('')}
+      </div>
+      <p class="result-section-label">Preparación</p>
+      ${recipe.pasos.map((s, i) => `
+        <div class="result-step">
+          <span class="result-step-num">${i + 1}</span>
+          <div>
+            <p class="result-step-title">${s.titulo}</p>
+            <p class="result-step-desc">${s.descripcion}</p>
+          </div>
+        </div>`).join('')}
+      <div class="tip-box">
+        <i class="ti ti-bulb"></i>
+        <div><strong>Consejo del chef:</strong> ${recipe.consejo}</div>
+      </div>`;
+    resultDiv.style.display = 'block';
+  } catch (err) {
+    resultDiv.innerHTML = `<p style="font-size:13px;color:var(--text-secondary)">No se pudo generar la receta. Verifica tu conexión e intenta de nuevo.</p>`;
+    resultDiv.style.display = 'block';
+  }
+
+  btn.innerHTML = '<i class="ti ti-sparkles"></i> Generar otra receta';
+  btn.disabled = false;
+}
+
+// ===================== TOAST =====================
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.innerHTML = `<i class="ti ti-check"></i> ${msg}`;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ===================== INIT =====================
+renderRecipes();
+</script>
+</body>
+</html>
